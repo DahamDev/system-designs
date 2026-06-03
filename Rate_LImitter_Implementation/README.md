@@ -254,17 +254,6 @@ if (availableTokens > 0) {
 return false;
 ```
 
-So the behavior is:
-
-```mermaid
-stateDiagram-v2
-    [*] --> BucketCreated
-    BucketCreated --> HasTokens
-    HasTokens --> HasTokens: Request allowed / tokens--
-    HasTokens --> Empty: Last token used
-    Empty --> Empty: Request rejected
-    Empty --> HasTokens: 60 seconds passed / refill
-```
 
 ## Running the Application
 
@@ -293,8 +282,9 @@ The 6th request should return `429 Too Many Requests`.
 
 ## Current Behavior Notes
 
-- The limits are global per route, not per user or per IP address.
-- Buckets are stored in memory, so limits reset when the application restarts.
-- The current implementation only defines buckets for configured routes.
-- The refill behavior resets the bucket to full after 60 seconds have passed, but `lastUpdateTime` is not currently updated after refill.
-- This implementation is useful for learning and local demos. A production implementation would usually add per-client keys, thread safety, distributed storage, and safer handling for unconfigured routes.
+- While this project implements a simple rate limitter, its is not recommended to use this apraoch in a production system
+- Having token buckets in memory can gradually increase the heap memory usage
+- This design is not recommended for a destributed architecture 
+- Race conditions can occur when two requests trying to access the same token bucket at the same time. 
+
+## To address these issues, you can use Redis as a destributed cache and use destributed locks to prevent race conditions, 
